@@ -7,8 +7,19 @@ body {
     background-size: 24px 24px;
     margin: 0;
     padding: 0;
-    overflow: auto;
     color: #1f2937;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    cursor: grab;
+}
+
+body:active{
+    cursor: grabbing;
+}
+
+.node-card, .zoom-controls {
+    cursor: default;
 }
 
 #canvas {
@@ -19,7 +30,6 @@ body {
     padding: 80px 40px;
     box-sizing: border-box;
     transform-origin: top center;
-    transition: transform 0.15s ease-out;
 }
 
 .node {
@@ -126,11 +136,11 @@ textarea::placeholder {
 }
 
 .node::before{
-    right: 50%;
+    right: calc(50% + 1px);
 }
 
 .node::after {
-    left: 50%;
+    left: calc(50% - 1px);
     border-left: 2px solid #cbd5e1;
 }
 
@@ -207,4 +217,32 @@ textarea::placeholder {
     min-width: 48px;
     text-align: center;
     cursor: default;
+}
+
+.delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: #d1d5db;
+    cursor: pointer;
+    font-size: 18px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    opacity: 0;
+}
+
+.node-card:hover .delete-btn {
+    opacity: 1;
+}
+
+.delete-btn:hover {
+    background-color: #fee2e2;
+    color: #ef4444;
 }
