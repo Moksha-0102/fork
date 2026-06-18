@@ -12,6 +12,7 @@ document.addEventListener('click', function(event) {
         const parentNode = deleteBtn.closest('.node');
         if (parentNode.id !== 'root-node') {
             parentNode.remove(); 
+            saveTree();
         }
     }
 });
@@ -52,6 +53,7 @@ document.addEventListener('keydown', function(event) {
                     parentNode.querySelector('textarea').focus();
                 }
                 currentNode.remove();
+                saveTree();
             }
             return;
         }
@@ -115,6 +117,7 @@ function spawnBranch(container){
 
     const newTextArea = newNode.querySelector('textarea');
     newTextArea.focus();
+    saveTree();
 }
 
 
@@ -188,7 +191,9 @@ document.addEventListener('wheel', function(event) {
 
 document.addEventListener('input', function(event) {
     if(event.target.tagName.toLowerCase() === 'textarea'){
+        event.target.textContent = event.target.value;
         autoResize(event.target);
+        saveTree();
     }
 });
 
@@ -196,3 +201,139 @@ function autoResize(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
 }
+
+
+
+
+/*localStorage auto-save*/
+
+function saveTree(){
+    const canvasContent = document.getElementById('canvas').innerHTML;
+    localStorage.setItem('forkTreeData', canvasContent);
+}
+
+function loadTree(){
+    const savedData = localStorage.getItem('forkTreeData');
+    if (savedData){
+        document.getElementById('canvas').innerHTML = savedData;
+
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(ta => autoResize(ta));
+    }
+}
+
+loadTree();
+
+
+
+/*Export engine*/
+
+const exportToggle = document.getElementById('export-toggle');
+const exportDropdown = document.getElementById('export-dropdown');
+
+exportToggle.addEventListener('click', (event) => {
+    event.stopPropagation();
+    exportDropdown.classList.toggle('hidden');
+});
+
+document.addEventListener('click', () => {
+    exportDropdown.classList.add('hidden');
+});
+
+function parseToMarkdown(node, depth = 0){
+    let result = '';
+    const card = node.querySelector(':scope > .node-card');
+    const childrenContainer = node.querySelector(':scope > .children');
+
+    if (card){
+        const textarea = card.querySelector('textarea');
+        if(textarea && textarea.value.trim() !== ''){
+            let textValue = textarea.value.replace(/\n/g, ' ').trim();
+            result += "  ".repeat(depth) + '- ' + textValue + '\n';
+        }
+    }
+
+    if(childrenContainer){
+        const childNodes = childrenContainer.querySelectorAll(':scope > .node');
+        childNodes.forEach(child => {
+            result += parseToMarkdown(child, depth + 1);
+        });
+    }
+    return result;
+}
+
+function parseToJson(node) {
+    let obj = {};
+    const card = node.querySelector(':scope > .node-card');
+    const childrenContainer = node.querySelector(':scope > .children');
+
+    if (card) {
+        const textarea = card.querySelector('textarea');
+        if (textarea){
+            obj.thought = textarea.value.trim();
+        }
+    }
+
+    if (childrenContainer){
+        const childNodes = childrenContainer.querySelectorAll(':scope > .node');
+        if(childNodes.length > 0){
+            obj.branches = [];
+            childNodes.forEach(child => {
+                obj.branches.push(parseToJson(child));
+            });
+        }
+    } 
+    return obj;
+}
+
+
+async function prepareCanvasForCapture(callback) {
+    const originalTransform = canvas.style.transform;
+
+    document.querySelectorAll('.fork-btn, .delete-btn').forEach(btn => btn.classList.add('hide-for-export'));
+    document.querySelector('.bottom-right-controls').classList.add('hide-for-export');
+
+    canvas.style.transform = 'scale(1) translate(0px, 0px)';
+    await new Promise(resolve => setTimeout(resolve, 50));
+    await callback();
+
+    canvas.style.transform = originalTransform;
+    document.querySelectorAll('.fork-btn, .delete-btn').forEach(btn => btn.classList.remove('hide-for-export'));
+    document.querySelector('.bottom-right-controls').classList.remove('hide-for-export');
+}
+
+document.getElementById('export-md').addEventListener('click', () => {
+    const rootNode = document.getElementById('root-node');
+    const mdData = parseToMarkdown(rootNode, 0);
+    navigator.clipboard.writeText(mdData).then(() => {
+        alert("Markdown list copied to clipboard!");
+    });
+});
+
+document.getElementById('export-json').addEventListener('click', () => {
+    const rootNode = document.getElementById('root-node');
+    const jsonData = JSON.stringify(parseToJson(rootNode), null, 4);
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "fork_logic_tree.json";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
+
+document.getElementById('export-png').addEventListener('click', () => {
+    prepareCanvasForCapture(async () => {
+        const captureCanvas = await html2canvas(canvas, {
+            backgroundColor: "#fafafa",
+            scale: 2 
+        });
+        
+        const link = document.createElement('a');
+        link.download = 'fork_logic_tree.png';
+        link.href = captureCanvas.toDataURL('image/png');
+        link.click();
+    });
+});
+
+
