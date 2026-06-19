@@ -7,7 +7,6 @@
         <link rel="stylesheet" href="index.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     </head>
-    </head>
     <body>
         <div id="canvas">
             <div class="node" id="root-node">
@@ -22,22 +21,42 @@
 
         <div class="bottom-right-controls">
 
-            <div class="export-wrapper">
-                <button id="export-toggle" title="Export Options">
-                    <svg xmlns="https://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
+            <div class="control-group">
+                <button id="undo-btn" title="Undo (Ctrl+Z)" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
+                </button>
+                <button id="redo-btn" title="Redo (Ctrl+Y)" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 3.7"></path></svg>
+                </button>
+            </div>
+
+            <div class="control-group">
+                <button id="theme-toggle" title="Toggle Dark Mode">
+                    <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                     </svg>
                 </button>
+            </div>
+
+            <div class="export-wrapper">
+                <div class="control-group">
+                    <button id="export-toggle" title="Export Options">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </button>
+                </div>
+                
                 <div id="export-dropdown" class="export-dropdown hidden">
                     <button id="export-png">PNG</button>
-                    <button id="export-md">Markdown Text</button>
-                    <button id="export-json">JSON Data</button>
+                    <button id="export-md">Markdown</button>
+                    <button id="export-json">JSON</button>
                 </div>
             </div>
 
-            <div class="zoom-controls">
+            <div class="control-group">
                 <button id="zoom-out">-</button>
                 <span id="zoom-level">100%</span>
                 <button id="zoom-in">+</button>

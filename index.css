@@ -1,25 +1,64 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
+:root {
+    --bg-canvas: #fafafa;
+    --bg-dots: #d1d5db;
+    --text-main: #1f2937;
+    --bg-card: white;
+    --border-card: #e5e7eb;
+    --border-card-focus: #9ca3af;
+    --text-placeholder: #9ca3af;
+    --bg-btn: #f3f4f6;
+    --text-btn: #4b5563;
+    --bg-btn-hover: #111827;
+    --text-btn-hover: white;
+    --border-tree: #cbd5e1;
+    --bg-delete-hover: #fee2e2;
+    --text-delete-hover: #ef4444;
+    --text-delete: #d1d5db;
+    --shadow-card: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] {
+    --bg-canvas: #111827;
+    --bg-dots: #374151;
+    --text-main: #f3f4f6;
+    --bg-card: #1f2937;
+    --border-card: #374151;
+    --border-card-focus: #60a5fa;
+    --text-placeholder: #6b7280;
+    --bg-btn: #374151;
+    --text-btn: #d1d5db;
+    --bg-btn-hover: #f3f4f6;
+    --text-btn-hover: #111827;
+    --border-tree: #4b5563;
+    --bg-delete-hover: #7f1d1d;
+    --text-delete-hover: #fca5a5;
+    --text-delete: #4b5563;
+    --shadow-card: rgba(0, 0, 0, 0.3);
+}
+
 body {
     font-family: 'Inter', system-ui, sans-serif;
-    background-color: #fafafa;
-    background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+    background-color: var(--bg-canvas);
+    background-image: radial-gradient(var(--bg-dots) 1px, transparent 1px);
     background-size: 24px 24px;
     margin: 0;
     padding: 0;
-    color: #1f2937;
+    color: var(--text-main);
     overflow: hidden;
     width: 100vw;
     height: 100vh;
     cursor: grab;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-body:active{
-    cursor: grabbing;
+body:active { 
+    cursor: grabbing; 
 }
 
-.node-card, .zoom-controls {
-    cursor: default;
+.node-card, .zoom-controls { 
+    cursor: default; 
 }
 
 #canvas {
@@ -42,20 +81,20 @@ body:active{
 }
 
 .node-card {
-    background: white;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
     border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 4px 6px -1px var(--shadow-card), 0 2px 4px -1px var(--shadow-card);
     width: 300px;
     padding: 16px;
-    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease, background-color 0.3s ease;
     position: relative;
     z-index: 2;
 }
 
 .node-card:focus-within {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    border-color: #9ca3af;
+    box-shadow: 0 10px 15px -3px var(--shadow-card);
+    border-color: var(--border-card-focus);
     transform: translateY(-2px);
 }
 
@@ -69,19 +108,17 @@ textarea {
     font-family: inherit;
     font-size: 15px;
     line-height: 1.6;
-    color: #374151;
+    color: var(--text-main);
     outline: none;
     background: transparent;
     overflow: hidden;
 }
 
-textarea::placeholder {
-    color: #9ca3af;
-}
+textarea::placeholder { color: var(--text-placeholder); }
 
-.fork-btn{
-    background-color: #f3f4f6;
-    color: #4b5563;
+.fork-btn {
+    background-color: var(--bg-btn);
+    color: var(--text-btn);
     border: 1px solid transparent;
     padding: 8px 14px;
     border-radius: 8px;
@@ -98,9 +135,37 @@ textarea::placeholder {
 }
 
 .fork-btn:hover {
-    background-color: #111827;
-    color: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: var(--bg-btn-hover);
+    color: var(--text-btn-hover);
+    box-shadow: 0 2px 4px var(--shadow-card);
+}
+
+.delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: var(--text-delete);
+    cursor: pointer;
+    font-size: 18px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    opacity: 0;
+}
+
+.node-card:hover .delete-btn { 
+    opacity: 1; 
+}
+
+.delete-btn:hover {
+    background-color: var(--bg-delete-hover);
+    color: var(--text-delete-hover);
 }
 
 .children {
@@ -117,13 +182,14 @@ textarea::placeholder {
     top: 0;
     left: 50%;
     margin-left: -1px;
-    border-left: 2px solid #cbd5e1;
+    border-left: 2px solid var(--border-tree);
     width: 0;
     height: 40px;
+    transition: border-color 0.3s ease;
 }
 
-.children:empty::before {
-    display: none;
+.children:empty::before { 
+    display: none; 
 }
 
 .node::before, .node::after {
@@ -132,80 +198,51 @@ textarea::placeholder {
     top: 0;
     width: 50%;
     height: 40px;
-    border-top: 2px solid #cbd5e1;
+    border-top: 2px solid var(--border-tree);
+    transition: border-color 0.3s ease;
 }
 
-.node::before{
-    right: calc(50% + 1px);
+.node::before { 
+    right: calc(50% + 1px); 
 }
 
-.node::after {
-    left: calc(50% - 1px);
-    border-left: 2px solid #cbd5e1;
+.node::after { 
+    left: calc(50% - 1px); 
+    border-left: 2px solid var(--border-tree); 
 }
 
-.node:first-child::before{
-    border-top: none;
+.node:first-child::before { 
+    border-top: none; 
 } 
 
-.node:last-child::after {
-    border-top: none;
-    border-left: none;
+.node:last-child::after { 
+    border-top: none; border-left: none; 
 }
 
-.node:first-child::after {
-    border-radius: 12px 0 0 0;
+.node:first-child::after { 
+    border-radius: 12px 0 0 0; 
 }
 
-.node:last-child::before {
-    border-right: 2px solid #cbd5e1;
-    border-radius: 0 12px 0 0;
+.node:last-child::before { 
+    border-right: 2px solid var(--border-tree); 
+    border-radius: 0 12px 0 0; 
+}
+.node:only-child::after { 
+    border-top: none; 
+    border-left: 2px solid var(--border-tree); 
+    border-radius: 0; 
 }
 
-.node:only-child::after {
-    border-top: none;
-    border-left: 2px solid #cbd5e1;
-    border-radius: 0;
+.node:only-child::before { 
+    display: none; 
 }
 
-.node:only-child::before {
-    display: none;
+#root-node { 
+    padding-top: 0; 
 }
 
-#root-node {
-    padding-top: 0;
-}
-
-#root-node::before, #root-node::after {
-    display: none;
-}
-
-.delete-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: none;
-    border: none;
-    color: #d1d5db;
-    cursor: pointer;
-    font-size: 18px;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    opacity: 0;
-}
-
-.node-card:hover .delete-btn {
-    opacity: 1;
-}
-
-.delete-btn:hover {
-    background-color: #fee2e2;
-    color: #ef4444;
+#root-node::before, #root-node::after { 
+    display: none; 
 }
 
 .bottom-right-controls {
@@ -217,65 +254,70 @@ textarea::placeholder {
     z-index: 100;
 }
 
-.zoom-controls, #export-toggle {
-    background: white;
-    border: 1px solid #e5e7eb;
+.control-group {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
     border-radius: 8px;
     display: flex;
     align-items: center;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px -1px var(--shadow-card);
     font-family: inherit;
-    color: #4b5563;
+    color: var(--text-btn);
+    overflow: hidden;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-.zoom-controls button {
+.control-group button {
     background: none;
     border: none;
-    padding: 8px 14px;
+    border-right: 1px solid var(--border-card);
+    padding: 8px 12px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
     color: inherit;
-    transition: background 0.2s;
+    transition: background 0.2s, opacity 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.zoom-controls button:hover {
-    background: #f3f4f6;
-    color: #111827;
+.control-group button:last-child { border-right: none; }
+
+.control-group button:hover:not(:disabled) {
+    background: var(--bg-btn);
+    color: var(--text-main);
+}
+
+.control-group button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background: transparent;
 }
 
 #zoom-level {
     font-size: 13px;
     font-weight: 600;
-    padding: 0 40px;
+    padding: 0 12px;
     min-width: 48px;
     text-align: center;
     cursor: default;
-}
-
-.export-wrapper {
-    position: relative;
-}
-
-#export-toggle {
-    padding: 8px 10px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    transition: all 0.2s;
+    border-right: 1px solid var(--border-card);
     display: flex;
     align-items: center;
-    justify-self: center;
+    justify-content: center;
 }
+
+.export-wrapper { position: relative; }
 
 .export-dropdown {
     position: absolute;
     bottom: 100%;
     right: 0;
     margin-bottom: 8px;
-    background: white;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
     border-radius: 8px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 15px -3px var(--shadow-card);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -292,25 +334,24 @@ textarea::placeholder {
 .export-dropdown button {
     background: none;
     border: none;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--bg-btn);
     padding: 10px 16px;
     text-align: left;
     cursor: pointer;
     font-size: 13px;
-    color: #374151;
+    color: var(--text-main);
     font-family: inherit;
     transition: background 0.2s;
 }
 
-.export-dropdown button:last-child {
-    border-bottom: none;
+.export-dropdown button:last-child { 
+    border-bottom: none; 
 }
 
 .export-dropdown button:hover {
-    background: #f9fafb;
-    color: #111827;
+    background: var(--bg-btn);
 }
 
-.hide-for-export {
-    display: none !important;
+.hide-for-export { 
+    display: none !important; 
 }

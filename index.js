@@ -2,6 +2,7 @@ document.addEventListener('click', function(event) {
     
     const forkBtn = event.target.closest('.fork-btn');
     if (forkBtn) {
+        saveStateToHistory();
         const parentNode = forkBtn.closest('.node');
         const childrenContainer = parentNode.querySelector('.children');
         spawnBranch(childrenContainer);
@@ -11,6 +12,7 @@ document.addEventListener('click', function(event) {
     if (deleteBtn) {
         const parentNode = deleteBtn.closest('.node');
         if (parentNode.id !== 'root-node') {
+            saveStateToHistory();
             parentNode.remove(); 
             saveTree();
         }
@@ -25,6 +27,7 @@ document.addEventListener('keydown', function(event) {
         
         if ((event.ctrlKey || event.metaKey) && (event.key === 'Enter')) {
             event.preventDefault();
+            saveStateToHistory();
             const childrenContainer = currentNode.querySelector('.children');
             spawnBranch(childrenContainer);
             return;
@@ -32,7 +35,7 @@ document.addEventListener('keydown', function(event) {
 
         if((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b'){
             event.preventDefault();
-
+            saveStateToHistory();
             const parentChildrenContainer = currentNode.parentElement;
 
             if (parentChildrenContainer && parentChildrenContainer.classList.contains('children')){
@@ -47,6 +50,7 @@ document.addEventListener('keydown', function(event) {
         if ((event.ctrlKey || event.metaKey) && (event.key === 'Delete' || event.key === 'Backspace')) {
             event.preventDefault();
             if (currentNode.id !== 'root-node') {
+                saveStateToHistory();
                 const parentChildrenContainer = currentNode.parentElement;
                 const parentNode = parentChildrenContainer.closest('.node');
                 if (parentNode) {
@@ -324,10 +328,12 @@ document.getElementById('export-json').addEventListener('click', () => {
 
 document.getElementById('export-png').addEventListener('click', () => {
     prepareCanvasForCapture(async () => {
+        const currentBgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-canvas').trim() || '#fafafa';
+
         const captureCanvas = await html2canvas(canvas, {
-            backgroundColor: "#fafafa",
-            scale: 2 
-        });
+            backgroundColor: currentBgColor,
+            scale: 2
+        })
         
         const link = document.createElement('a');
         link.download = 'fork_logic_tree.png';
@@ -337,3 +343,96 @@ document.getElementById('export-png').addEventListener('click', () => {
 });
 
 
+/*Undo Engine*/
+
+const undoHistory = [];
+let redoHistory = [];
+const MAX_HISTORY = 50;
+
+function updateHistoryButtons (){
+    document.getElementById('undo-btn').disabled = undoHistory.length === 0;
+    document.getElementById('redo-btn').disabled = redoHistory.length === 0;
+}
+
+function saveStateToHistory() {
+    const currentState = document.getElementById('canvas').innerHTML;
+    undoHistory.push(currentState);
+
+    if (undoHistory.length > MAX_HISTORY){
+        undoHistory.shift()
+    }
+
+    redoHistory = [];
+    updateHistoryButtons();
+}
+
+function undo(){
+    if (undoHistory.length > 0){
+        redoHistory.push(document.getElementById('canvas').innerHTML);
+
+        const previousState = undoHistory.pop();
+        document.getElementById('canvas').innerHTML = previousState;
+
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(ta => autoResize(ta));
+
+        saveTree();
+        updateHistoryButtons();
+    }
+}
+
+function redo(){
+    if (redoHistory.length > 0){
+        undoHistory.push(document.getElementById('canvas').innerHTML);
+        const nextState = redoHistory.pop();
+        document.getElementById('canvas').innerHTML = nextState;
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(ta => autoResize(ta));
+
+        saveTree();
+        updateHistoryButtons();
+    }
+}
+
+document.getElementById('undo-btn').addEventListener('click', undo);
+document.getElementById('redo-btn').addEventListener('click', redo);
+
+document.addEventListener('keydown', function(event) {
+    if (event.target && event.target.tagName && event.target.tagName.toLowerCase() !== 'textarea') {
+        
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) {
+            event.preventDefault();
+            undo();
+        }
+        
+        if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase() === 'y' || (event.key.toLowerCase() === 'z' && event.shiftKey))) {
+            event.preventDefault();
+            redo();
+        }
+    }
+});
+
+
+/*Dark Mode*/
+
+const themeToggleBtn = document.getElementById('theme-toggle');
+const themeIcon = document.getElementById('theme-icon');
+
+let currentTheme = localStorage.getItem('forkTheme') || 'light';
+applyTheme(currentTheme);
+
+function applyTheme(theme){
+    if (theme === 'dark'){
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeIcon.innerHTML = `<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`;
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+        themeIcon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+    }
+}
+
+themeToggleBtn.addEventListener('click', () => {
+    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    localStorage.setItem('forkTheme', currentTheme)
+    applyTheme(currentTheme);
+})
