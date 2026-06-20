@@ -5,6 +5,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Fork()</title>
         <link rel="stylesheet" href="index.css">
+        <script>
+            if (localStorage.getItem('forkTheme') === 'dark'){
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        </script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     </head>
     <body>
@@ -13,6 +18,12 @@
                 <div class="node-card">
                     <textarea placeholder="Start you thought process here..."></textarea>
                     <button class="fork-btn">⑂ Fork()</button>
+
+                    <button class="collapse-btn" title="Fold/Unfold Branch">
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
                 </div>
 
                 <div class="children"></div>
@@ -36,6 +47,13 @@
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                     </svg>
                 </button>
+
+                <button id="focus-toggle" title="Toggle Focuse Mode">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
             </div>
 
             <div class="export-wrapper">
@@ -57,6 +75,16 @@
             </div>
 
             <div class="control-group">
+                <button id="recenter-btn" title="Recenter View">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="22" y1="12" x2="18" y2="12"></line>
+                        <line x1="6" y1="12" x2="2" y2="12"></line>
+                        <line x1="12" y1="6" x2="12" y2="2"></line>
+                        <line x1="12" y1="22" x2="12" y2="18"></line>
+                    </svg>
+                </button>
+
                 <button id="zoom-out">-</button>
                 <span id="zoom-level">100%</span>
                 <button id="zoom-in">+</button>

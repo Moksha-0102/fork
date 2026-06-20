@@ -4,6 +4,7 @@ document.addEventListener('click', function(event) {
     if (forkBtn) {
         saveStateToHistory();
         const parentNode = forkBtn.closest('.node');
+        parentNode.classList.remove('collapsed');
         const childrenContainer = parentNode.querySelector('.children');
         spawnBranch(childrenContainer);
     }
@@ -17,17 +18,48 @@ document.addEventListener('click', function(event) {
             saveTree();
         }
     }
+
+    const collapseBtn = event.target.closest('.collapse-btn');
+    if (collapseBtn){
+        const parentNode = collapseBtn.closest('.node');
+        parentNode.classList.toggle('collapsed');
+        saveTree();
+    }
 });
 
+
 document.addEventListener('keydown', function(event) {
+    
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        if (event.shiftKey) {
+            redo();
+        } else {
+            undo();
+        }
+        return;
+    }
+
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') {
+        event.preventDefault();
+        redo();
+        return;
+    }
+
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'f'){
+        event.preventDefault();
+        toggleFocusMode();
+        return;
+    }
+
     if (event.target.tagName.toLowerCase() === 'textarea') {
-        
         const activeTextarea = event.target;
         const currentNode = activeTextarea.closest('.node');
         
         if ((event.ctrlKey || event.metaKey) && (event.key === 'Enter')) {
             event.preventDefault();
             saveStateToHistory();
+            currentNode.classList.remove('collapsed');
             const childrenContainer = currentNode.querySelector('.children');
             spawnBranch(childrenContainer);
             return;
@@ -51,11 +83,21 @@ document.addEventListener('keydown', function(event) {
             event.preventDefault();
             if (currentNode.id !== 'root-node') {
                 saveStateToHistory();
-                const parentChildrenContainer = currentNode.parentElement;
-                const parentNode = parentChildrenContainer.closest('.node');
-                if (parentNode) {
-                    parentNode.querySelector('textarea').focus();
+                
+                const nextSibling = currentNode.nextElementSibling;
+                const prevSibling = currentNode.previousElementSibling;
+                const parentNode = currentNode.parentElement.closest('.node');
+
+                if (nextSibling && nextSibling.classList.contains('node')) {
+                    focusAndCenter(nextSibling.querySelector('textarea'));
+                } 
+                else if (prevSibling && prevSibling.classList.contains('node')) {
+                    focusAndCenter(prevSibling.querySelector('textarea'));
+                } 
+                else if (parentNode) {
+                    focusAndCenter(parentNode.querySelector('textarea'));
                 }
+
                 currentNode.remove();
                 saveTree();
             }
@@ -67,42 +109,40 @@ document.addEventListener('keydown', function(event) {
             if (event.key === 'ArrowUp') {
                 event.preventDefault();
                 const parentChildrenContainer = currentNode.parentElement;
-
                 if (parentChildrenContainer && parentChildrenContainer.classList.contains('children')) {
                     const parentNode = parentChildrenContainer.closest('.node');
                     if (parentNode) {
-                        parentNode.querySelector('textarea').focus();
+                        focusAndCenter(parentNode.querySelector('textarea'));
                     }
                 }
             }
-            
             else if (event.key === 'ArrowDown') {
                 event.preventDefault();
                 const childrenContainer = currentNode.querySelector('.children');
                 const firstChildNode = childrenContainer ? childrenContainer.querySelector('.node') : null;
                 if (firstChildNode) {
-                    firstChildNode.querySelector('textarea').focus();
+                    focusAndCenter(firstChildNode.querySelector('textarea'));
                 }
             }
-            
             else if (event.key === 'ArrowLeft') {
                 event.preventDefault();
                 const prevSiblingNode = currentNode.previousElementSibling;
                 if (prevSiblingNode && prevSiblingNode.classList.contains('node')) {
-                    prevSiblingNode.querySelector('textarea').focus();
+                    focusAndCenter(prevSiblingNode.querySelector('textarea'));
                 }
             }
-            
             else if (event.key === 'ArrowRight') {
                 event.preventDefault();
                 const nextSiblingNode = currentNode.nextElementSibling;
                 if (nextSiblingNode && nextSiblingNode.classList.contains('node')) {
-                    nextSiblingNode.querySelector('textarea').focus();
+                    focusAndCenter(nextSiblingNode.querySelector('textarea'));
                 }
             }
         }
     }
 });
+
+
 
 function spawnBranch(container){
     const newNode = document.createElement('div');
@@ -113,6 +153,11 @@ function spawnBranch(container){
             <button class="delete-btn" title='Delete branch'>x</button>
             <textarea placeholder="Branch your logic here..."></textarea>
             <button class="fork-btn">⑂ Fork()</button>
+            <button class="collapse-btn" title=Fold/Unfold Branch">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </button>
         </div>
         <div class="children"></div>
     `;
@@ -120,7 +165,7 @@ function spawnBranch(container){
     container.appendChild(newNode);
 
     const newTextArea = newNode.querySelector('textarea');
-    newTextArea.focus();
+    focusAndCenter(newTextArea);
     saveTree();
 }
 
@@ -128,8 +173,33 @@ function spawnBranch(container){
 
 /*Zoom*/
 
+
+function focusAndCenter(textarea){
+    textarea.focus({preventScroll: true});
+
+    setTimeout(() => {
+        const card = textarea.closest('.node-card');
+        const rect = card.getBoundingClientRect();
+        const elementCenterX = rect.left + rect.width / 2;
+        const elementCenterY = rect.top + rect.height / 2;
+        const screenCenterX = window.innerWidth / 2;
+        const screenCenterY = window.innerHeight / 2;
+        
+        panX += (screenCenterX - elementCenterX)
+        panY += (screenCenterY - elementCenterY);
+
+        canvas.style.transition = 'transform 0.2s ease-out';
+        updateCanvas();
+
+        setTimeout(() => {
+            canvas.style.transition = 'none';
+        }, 200);
+    }, 10)
+}
+
+
 let zoomLevel = 1;
-let panX = 0;
+let panX = (window.innerWidth / 2) - 50000;
 let panY = 0;
 let isPanning = false;
 let startX = 0;
@@ -143,10 +213,11 @@ function updateCanvas(){
     zoomText.innerText = `${Math.round(zoomLevel * 100)}%`
 }
 
+updateCanvas();
+
 document.addEventListener('mousedown', function(event) {
     if (!event.target.closest('.node-card') && !event.target.closest('.zoom-controls')){
         isPanning = true;
-
         startX = event.clientX - panX;
         startY = event.clientY - panY;
     }
@@ -165,9 +236,37 @@ document.addEventListener('mouseup', function() {
 });
 
 function setZoom(newZoom) {
+    const screenCenterX = window.innerWidth / 2;
+    const screenCenterY = window.innerHeight / 2;
+    const canvasX = (screenCenterX - panX) / zoomLevel;
+    const canvasY = (screenCenterY - panY) / zoomLevel;
+
     zoomLevel = Math.max(0.2, Math.min(newZoom, 2));
+    panX = screenCenterX - (canvasX * zoomLevel);
+    panY = screenCenterY - (canvasY * zoomLevel);
+
     updateCanvas();
 }
+
+document.getElementById('recenter-btn').addEventListener('click', () => {
+    const rootCard = document.querySelector('#root-node > .node-card');
+    const rect = rootCard.getBoundingClientRect();
+    const currentScreenX = rect.left + rect.width / 2;
+    const currentScreenY = rect.top + rect.height / 2;
+    const localX = (currentScreenX - panX) / zoomLevel;
+    const localY = (currentScreenY - panY) / zoomLevel;
+    
+    zoomLevel = 1;
+    panX += (window.innerWidth / 2) - localX;
+    panY += (window.innerHeight * 0.25) - localY;
+
+    canvas.style.transition = 'transform 0.4s ease-out';
+    updateCanvas();
+
+    setTimeout(() => {
+        canvas.style.transition = 'none';
+    }, 400);
+})
 
 document.getElementById('zoom-in').addEventListener('click', () => {
     setZoom(zoomLevel + 0.1);
@@ -202,7 +301,7 @@ document.addEventListener('input', function(event) {
 });
 
 function autoResize(textarea) {
-    textarea.style.height = 'auto';
+    textarea.style.height = '100px';
     textarea.style.height = textarea.scrollHeight + 'px';
 }
 
@@ -397,20 +496,44 @@ function redo(){
 document.getElementById('undo-btn').addEventListener('click', undo);
 document.getElementById('redo-btn').addEventListener('click', redo);
 
-document.addEventListener('keydown', function(event) {
-    if (event.target && event.target.tagName && event.target.tagName.toLowerCase() !== 'textarea') {
-        
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) {
-            event.preventDefault();
-            undo();
-        }
-        
-        if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase() === 'y' || (event.key.toLowerCase() === 'z' && event.shiftKey))) {
-            event.preventDefault();
-            redo();
+
+
+
+/*Focus Mode*/
+
+const focusToggleBtn = document.getElementById('focus-toggle');
+let focusModeActive = false;
+
+function toggleFocusMode(){
+    focusModeActive = !focusModeActive;
+    document.body.classList.toggle('focus-mode-active', focusModeActive);
+    focusToggleBtn.classList.toggle('active', focusModeActive);
+}
+
+focusToggleBtn.addEventListener('click', toggleFocusMode);
+
+document.addEventListener('focusin', function(event) {
+    if (event.target.tagName.toLowerCase() === 'textarea'){
+        document.querySelectorAll('.focused-node').forEach(node => {
+            node.classList.remove('focused-node');
+        });
+
+        const currentNode = event.target.closest('.node');
+        if (currentNode){
+            currentNode.classList.add('focused-node');
         }
     }
 });
+
+
+
+
+
+
+
+
+
+
 
 
 /*Dark Mode*/
@@ -435,4 +558,25 @@ themeToggleBtn.addEventListener('click', () => {
     currentTheme = currentTheme === 'light' ? 'dark' : 'light';
     localStorage.setItem('forkTheme', currentTheme)
     applyTheme(currentTheme);
+})
+
+
+
+
+
+
+
+
+
+window.addEventListener('scroll', function(){
+    window.scrollTo(0, 0);
+});
+document.body.addEventListener('scroll', function(){
+    document.body.scrollTop = 0;
+    document.body.scrollLeft = 0;
+})
+
+
+window.addEventListener('load', () => {
+    document.getElementById('recenter-btn').click();
 })

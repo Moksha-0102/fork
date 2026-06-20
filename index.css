@@ -38,7 +38,7 @@
     --shadow-card: rgba(0, 0, 0, 0.3);
 }
 
-body {
+html, body {
     font-family: 'Inter', system-ui, sans-serif;
     background-color: var(--bg-canvas);
     background-image: radial-gradient(var(--bg-dots) 1px, transparent 1px);
@@ -47,6 +47,7 @@ body {
     padding: 0;
     color: var(--text-main);
     overflow: hidden;
+    overscroll-behavior: none;
     width: 100vw;
     height: 100vh;
     cursor: grab;
@@ -62,13 +63,14 @@ body:active {
 }
 
 #canvas {
+    position: absolute;
+    width: 100000px;
+    padding: 80px 0;
     display: flex;
     justify-content: center;
-    min-width: 100%;
-    width: max-content;
-    padding: 80px 40px;
-    box-sizing: border-box;
-    transform-origin: top center;
+    transform-origin: 0 0;
+    left: 0;
+    top: 0;
 }
 
 .node {
@@ -354,4 +356,81 @@ textarea::placeholder { color: var(--text-placeholder); }
 
 .hide-for-export { 
     display: none !important; 
+}
+
+
+.collapse-btn {
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-placeholder);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.collapse-btn:hover {
+    color: var(--text-main);
+    border-color: var(--border-card-focus);
+    box-shadow: 0 2px 4px var(--shadow-card);
+}
+
+.node:has(> .children > .node) > .node-card .collapse-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.node.collapsed > .children {
+    display: none !important;
+}
+
+.node.collapsed > .node-card .collapse-btn svg {
+    transform: rotate(-90deg);
+}
+
+.node.collapsed > .node-card::after {
+    display: none;
+}
+
+
+body.focus-mode-active {
+    background-image: none;
+}
+
+body.focus-mode-active .node-card,
+body.focus-mode-active .children::before,
+body.focus-mode-active .node::before,
+body.focus-mode-active .node::after {
+    opacity: 0.15;
+    transition: opacity 0.4s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.focus-mode-active .node.focused-node > .node-card {
+    opacity: 1;
+    box-shadow: 0 0 0 2px var(--border-card-focus), 0 10px 20px -5px var(--shadow-card);
+    transform: scale(1.02);
+    z-index: 10;
+}
+
+body.focus-mode-active .node:has(.focused-node) > .node-card,
+body.focus-mode-active .node:has(.focused-node) > .children::before,
+body.focus-mode-active .node:has(.focused-node)::before,
+body.focus-mode-active .node:has(.focused-node)::after {
+    opacity: 0.6;
+}
+
+#focus-toggle.active {
+    background-color: var(--bg-card);
+    columns: var(--border-card-focus);
 }
