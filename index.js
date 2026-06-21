@@ -65,6 +65,8 @@ document.addEventListener('click', function(event) {
 
 document.addEventListener('keydown', function(event) {
 
+    
+
    if (event.ctrlKey || event.metaKey){
         if (event.key === '=' || event.key === '+'){
             event.preventDefault();
@@ -159,34 +161,40 @@ document.addEventListener('keydown', function(event) {
             return;
         }
 
-        if (event.ctrlKey || event.metaKey) {
-            
-            if (event.key === 'ArrowUp') {
+
+        const isCmdCtrl = event.ctrlKey || event.metaKey;
+        const isAlt = event.altKey;
+
+        if (isCmdCtrl || isAlt) {
+            const key = event.key.toLowerCase();
+            const code = event.code;
+            const isUp = key === 'arrowup' || (isAlt && (code === 'KeyW' || code === 'KeyK'));
+            const isDown = key === 'arrowdown' || (isAlt && (code === 'KeyS' || code === 'KeyJ'));
+            const isLeft = key === 'arrowleft' || (isAlt && (code === 'KeyA' || code === 'KeyH'));
+            const isRight = key === 'arrowright' || (isAlt && (code === 'KeyD' || code === 'KeyL'));
+
+            if (isUp) {
                 event.preventDefault();
                 const parentChildrenContainer = currentNode.parentElement;
                 if (parentChildrenContainer && parentChildrenContainer.classList.contains('children')) {
                     const parentNode = parentChildrenContainer.closest('.node');
-                    if (parentNode) {
-                        focusAndCenter(parentNode.querySelector('textarea'));
-                    }
+                    if (parentNode) focusAndCenter(parentNode.querySelector('textarea'));
                 }
             }
-            else if (event.key === 'ArrowDown') {
+            else if (isDown) {
                 event.preventDefault();
                 const childrenContainer = currentNode.querySelector('.children');
                 const firstChildNode = childrenContainer ? childrenContainer.querySelector('.node') : null;
-                if (firstChildNode) {
-                    focusAndCenter(firstChildNode.querySelector('textarea'));
-                }
+                if (firstChildNode) focusAndCenter(firstChildNode.querySelector('textarea'));
             }
-            else if (event.key === 'ArrowLeft') {
+            else if (isLeft) {
                 event.preventDefault();
                 const prevSiblingNode = currentNode.previousElementSibling;
                 if (prevSiblingNode && prevSiblingNode.classList.contains('node')) {
                     focusAndCenter(prevSiblingNode.querySelector('textarea'));
                 }
             }
-            else if (event.key === 'ArrowRight') {
+            else if (isRight) {
                 event.preventDefault();
                 const nextSiblingNode = currentNode.nextElementSibling;
                 if (nextSiblingNode && nextSiblingNode.classList.contains('node')) {
