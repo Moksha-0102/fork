@@ -1,3 +1,38 @@
+const alertIcons = {
+    success: `<svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+    info: `<svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
+    warning: `<svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`
+};
+
+function showCustomAlert(title, message, type = 'info') {
+    const overlay = document.createElement('div');
+    overlay.className = 'premium-overlay';
+    
+    overlay.innerHTML = `
+        <div class="custom-alert-box">
+            <div class="custom-alert-icon" style="color: var(--text-main); margin-bottom: 20px;">
+                ${alertIcons[type] || alertIcons.info}
+            </div>
+            <h3>${title}</h3>
+            <p>${message}</p>
+            <button class="custom-alert-btn">Got it</button>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    const btn = overlay.querySelector('.custom-alert-btn');
+    btn.focus();
+    
+    const close = () => {
+        overlay.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => document.body.removeChild(overlay), 300);
+    };
+    
+    btn.addEventListener('click', close);
+}
+
+
 document.addEventListener('click', function(event) {
     
     const forkBtn = event.target.closest('.fork-btn');
@@ -29,6 +64,26 @@ document.addEventListener('click', function(event) {
 
 
 document.addEventListener('keydown', function(event) {
+
+   if (event.ctrlKey || event.metaKey){
+        if (event.key === '=' || event.key === '+'){
+            event.preventDefault();
+            setZoom(zoomLevel + 0.1);
+            return;
+        }
+
+        if (event.key === '-'){
+            event.preventDefault();
+            setZoom(zoomLevel - 0.1);
+            return;
+        }
+
+        if (event.key === '0'){
+            event.preventDefault();
+            document.getElementById('recenter-btn').click();
+            return;
+        }
+    }
     
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault();
@@ -150,10 +205,11 @@ function spawnBranch(container){
 
     newNode.innerHTML = `
         <div class="node-card">
-            <button class="delete-btn" title='Delete branch'>x</button>
+            <button class="delete-btn" title="Delete branch">×</button>
             <textarea placeholder="Branch your logic here..."></textarea>
             <button class="fork-btn">⑂ Fork()</button>
-            <button class="collapse-btn" title=Fold/Unfold Branch">
+            
+            <button class="collapse-btn" title="Fold/Unfold Branch">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
@@ -216,11 +272,21 @@ function updateCanvas(){
 updateCanvas();
 
 document.addEventListener('mousedown', function(event) {
-    if (!event.target.closest('.node-card') && !event.target.closest('.zoom-controls')){
-        isPanning = true;
-        startX = event.clientX - panX;
-        startY = event.clientY - panY;
+    if (
+        event.target.closest('.node-card') || 
+        event.target.closest('.bottom-right-controls') ||
+        event.target.closest('.bottom-left-hud') ||
+        event.target.closest('.bottom-left-controls') ||
+        event.target.closest('.modal-overlay') ||
+        event.target.closest('.splash-screen')
+    ) {
+        return;
     }
+
+    isPanning = true;
+    startX = event.clientX - panX;
+    startY = event.clientY - panY;
+    document.body.classList.add('is-panning');
 });
 
 document.addEventListener('mousemove', function(event) {
@@ -233,6 +299,7 @@ document.addEventListener('mousemove', function(event) {
 
 document.addEventListener('mouseup', function() {
     isPanning = false;
+    document.body.classList.remove('is-panning');
 });
 
 function setZoom(newZoom) {
@@ -257,8 +324,9 @@ document.getElementById('recenter-btn').addEventListener('click', () => {
     const localY = (currentScreenY - panY) / zoomLevel;
     
     zoomLevel = 1;
-    panX += (window.innerWidth / 2) - localX;
-    panY += (window.innerHeight * 0.25) - localY;
+    
+    panX = (window.innerWidth / 2) - localX;
+    panY = (window.innerHeight * 0.25) - localY;
 
     canvas.style.transition = 'transform 0.4s ease-out';
     updateCanvas();
@@ -266,7 +334,7 @@ document.getElementById('recenter-btn').addEventListener('click', () => {
     setTimeout(() => {
         canvas.style.transition = 'none';
     }, 400);
-})
+});
 
 document.getElementById('zoom-in').addEventListener('click', () => {
     setZoom(zoomLevel + 0.1);
@@ -306,23 +374,68 @@ function autoResize(textarea) {
 }
 
 
-
-
-/*localStorage auto-save*/
-
 function saveTree(){
     const canvasContent = document.getElementById('canvas').innerHTML;
     localStorage.setItem('forkTreeData', canvasContent);
 }
 
-function loadTree(){
-    const savedData = localStorage.getItem('forkTreeData');
-    if (savedData){
-        document.getElementById('canvas').innerHTML = savedData;
+function startTypewriter(elementId, text, speed){
+    const element = document.getElementById(elementId);
+    if(!element) return;
 
-        const textareas = document.querySelectorAll('textarea');
-        textareas.forEach(ta => autoResize(ta));
+    element.innerHTML = '';
+    let i = 0;
+
+    function type(){
+        if(i < text.length){
+            element.innerHTML += text.charAt(i);
+            i++;
+            setTimeout(type, speed);
+        }
     }
+
+    setTimeout(type, 200);
+}
+
+
+
+function loadTree() {
+    const savedData = localStorage.getItem('forkTreeData');
+    const skipSplash = localStorage.getItem('forkSkipSplash'); 
+    const canvasEl = document.getElementById('canvas');
+    const splashScreen = document.getElementById('splash-screen');
+
+    if (skipSplash === 'true') {
+        if (splashScreen) splashScreen.style.display = 'none';
+    } else {
+        if (splashScreen) {
+            splashScreen.classList.remove('hidden');
+            splashScreen.style.display = 'flex';
+            startTypewriter('typewriter-text', 'Break out of the document.', 75);
+        }
+    }
+
+    if (savedData) {
+        canvasEl.innerHTML = savedData;
+        const textareas = canvasEl.querySelectorAll('textarea');
+        textareas.forEach(ta => {
+            ta.value = ta.textContent;
+            autoResize(ta);
+        });
+    } else {}
+
+    panX = (window.innerWidth / 2) - 50000;
+    panY = 150;
+    updateCanvas();
+    
+    setTimeout(() => {
+        canvasEl.classList.add('loaded');
+        
+        if (!savedData) {
+            const rootTextArea = canvasEl.querySelector('textarea');
+            if (rootTextArea) rootTextArea.focus({ preventScroll: true });
+        }
+    }, 50);
 }
 
 loadTree();
@@ -389,27 +502,11 @@ function parseToJson(node) {
     return obj;
 }
 
-
-async function prepareCanvasForCapture(callback) {
-    const originalTransform = canvas.style.transform;
-
-    document.querySelectorAll('.fork-btn, .delete-btn').forEach(btn => btn.classList.add('hide-for-export'));
-    document.querySelector('.bottom-right-controls').classList.add('hide-for-export');
-
-    canvas.style.transform = 'scale(1) translate(0px, 0px)';
-    await new Promise(resolve => setTimeout(resolve, 50));
-    await callback();
-
-    canvas.style.transform = originalTransform;
-    document.querySelectorAll('.fork-btn, .delete-btn').forEach(btn => btn.classList.remove('hide-for-export'));
-    document.querySelector('.bottom-right-controls').classList.remove('hide-for-export');
-}
-
 document.getElementById('export-md').addEventListener('click', () => {
     const rootNode = document.getElementById('root-node');
     const mdData = parseToMarkdown(rootNode, 0);
     navigator.clipboard.writeText(mdData).then(() => {
-        alert("Markdown list copied to clipboard!");
+        showCustomAlert('Copied to Clipboard', 'Your logic tree has been successfully exported to Markdown.', 'success');
     });
 });
 
@@ -423,24 +520,115 @@ document.getElementById('export-json').addEventListener('click', () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    showCustomAlert('JSON Exported', 'Your data structure has been saved to your downloads folder.', 'success');
 });
 
-document.getElementById('export-png').addEventListener('click', () => {
-    prepareCanvasForCapture(async () => {
-        const currentBgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-canvas').trim() || '#fafafa';
+async function captureAndExport(format) {
+    const loader = document.createElement('div');
+    loader.className = 'premium-overlay';
+    loader.innerHTML = `
+        <div class="orbital-spinner">
+            <div class="orbital-ring"></div>
+            <div class="orbital-ring"></div>
+            <div class="orbital-ring"></div>
+        </div>
+        <div class="loader-status" id="loader-text">Preparing canvas...</div>
+    `;
+    document.body.appendChild(loader);
 
-        const captureCanvas = await html2canvas(canvas, {
-            backgroundColor: currentBgColor,
-            scale: 2
-        })
-        
-        const link = document.createElement('a');
-        link.download = 'fork_logic_tree.png';
-        link.href = captureCanvas.toDataURL('image/png');
-        link.click();
+    const statusText = document.getElementById('loader-text');
+    const texts = ['Freezing DOM layout...', 'Processing spatial math...', 'Generating vector shapes...', 'Finalizing binary blob...'];
+    let textIdx = 0;
+    const textInterval = setInterval(() => {
+        if (textIdx < texts.length) {
+            statusText.innerText = texts[textIdx];
+            textIdx++;
+        }
+    }, 600);
+
+    await new Promise(r => setTimeout(r, 100));
+
+    const originalCanvas = document.getElementById('canvas');
+    const clonedCanvas = originalCanvas.cloneNode(true);
+    clonedCanvas.querySelectorAll('.fork-btn, .delete-btn, .collapse-btn').forEach(btn => btn.style.display = 'none');
+    
+    const currentBgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-canvas').trim() || '#fafafa';
+    Object.assign(clonedCanvas.style, {
+        width: 'max-content', height: 'max-content',
+        padding: '80px', transform: 'none', transition: 'none',
+        position: 'absolute', left: '0', top: '0',
+        backgroundColor: currentBgColor,
+        backgroundImage: 'radial-gradient(var(--bg-dots) 1px, transparent 1px)',
+        backgroundSize: '24px 24px'
     });
-});
 
+    const originalTextareas = originalCanvas.querySelectorAll('textarea');
+    const clonedTextareas = clonedCanvas.querySelectorAll('textarea');
+    originalTextareas.forEach((ta, index) => {
+        clonedTextareas[index].textContent = ta.value;
+        clonedTextareas[index].style.height = ta.style.height || ta.scrollHeight + 'px';
+    });
+
+    const exportFrame = document.createElement('div');
+    Object.assign(exportFrame.style, { 
+        position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh',
+        background: currentBgColor, overflow: 'auto', zIndex: '-9999'
+    });
+    exportFrame.appendChild(clonedCanvas);
+    document.body.appendChild(exportFrame);
+
+    await new Promise(r => setTimeout(r, 400));
+
+    try {
+        const exportWidth = clonedCanvas.scrollWidth;
+        const exportHeight = clonedCanvas.scrollHeight;
+
+        if (format === 'png') {
+            const blob = await htmlToImage.toBlob(clonedCanvas, { 
+                width: exportWidth, height: exportHeight, backgroundColor: currentBgColor,
+                style: { margin: 0, transform: 'none' }
+            });
+            if (!blob) throw new Error("Image engine failed to generate Blob.");
+            
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = 'fork_logic_tree.png';
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+        } 
+        else if (format === 'svg') {
+            const dataUrl = await htmlToImage.toSvg(clonedCanvas, { 
+                width: exportWidth, height: exportHeight, backgroundColor: currentBgColor,
+                style: { margin: 0, transform: 'none' } 
+            });
+            
+            const blob = new Blob([decodeURIComponent(dataUrl.split(',')[1])], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = 'fork_logic_tree.svg';
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+            showCustomAlert('SVG Export Complete', 'SVGs are raw vector files. If it looks broken in your browser, drag it directly into Figma or Illustrator to view it correctly.', 'info');        }
+    } catch (err) {
+        console.error("Export Error:", err);
+        showCustomAlert('Export Failed', 'Something went wrong during the rendering process. Please try again.', 'warning');} finally {
+        clearInterval(textInterval);
+        loader.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => document.body.removeChild(loader), 300);
+        document.body.removeChild(exportFrame);
+    }
+}
+
+const btnPng = document.getElementById('export-png');
+const btnSvg = document.getElementById('export-svg');
+
+btnPng.replaceWith(btnPng.cloneNode(true));
+btnSvg.replaceWith(btnSvg.cloneNode(true));
+
+document.getElementById('export-png').addEventListener('click', () => captureAndExport('png'));
+document.getElementById('export-svg').addEventListener('click', () => captureAndExport('svg'));
 
 /*Undo Engine*/
 
@@ -525,17 +713,6 @@ document.addEventListener('focusin', function(event) {
     }
 });
 
-
-
-
-
-
-
-
-
-
-
-
 /*Dark Mode*/
 
 const themeToggleBtn = document.getElementById('theme-toggle');
@@ -561,11 +738,54 @@ themeToggleBtn.addEventListener('click', () => {
 })
 
 
+function dismissSplash() {
+    const splashScreen = document.getElementById('splash-screen');
+    if (splashScreen && !splashScreen.classList.contains('hidden') && splashScreen.style.display !== 'none') {
+        
+        const skipCheck = document.getElementById('skip-splash-check');
+        if (skipCheck && skipCheck.checked) {
+            localStorage.setItem('forkSkipSplash', 'true');
+        }
 
+        splashScreen.classList.add('hidden');
+        setTimeout(() => splashScreen.style.display = 'none', 600);
+        
+        const rootTextArea = document.querySelector('#root-node textarea');
+        if (rootTextArea) rootTextArea.focus({preventScroll: true});
+    }
+}
 
+const dismissBtn = document.getElementById('dismiss-splash-btn');
+if (dismissBtn) dismissBtn.addEventListener('click', dismissSplash);
 
+document.addEventListener('keydown', function(event) {
+    const splashScreen = document.getElementById('splash-screen');
+    if (splashScreen && !splashScreen.classList.contains('hidden') && splashScreen.style.display !== 'none') {
+        if (event.target.id === 'skip-splash-check') return; 
+        
+        dismissSplash();
+        
+        if (event.key === 'Enter') event.preventDefault();
+    }
+});
 
+const shortcutsToggle = document.getElementById('shortcuts-toggle');
+const shortcutsModal = document.getElementById('shortcuts-modal');
+const closeShortcuts = document.getElementById('close-shortcuts');
 
+shortcutsToggle.addEventListener('click', () => {
+    shortcutsModal.classList.remove('hidden');
+});
+
+closeShortcuts.addEventListener('click', () => {
+    shortcutsModal.classList.add('hidden');
+});
+
+shortcutsModal.addEventListener('click', (event) => {
+    if (event.target === shortcutsModal) {
+        shortcutsModal.classList.add('hidden');
+    }
+});
 
 
 window.addEventListener('scroll', function(){
@@ -577,6 +797,8 @@ document.body.addEventListener('scroll', function(){
 })
 
 
-window.addEventListener('load', () => {
-    document.getElementById('recenter-btn').click();
-})
+
+
+
+
+

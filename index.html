@@ -11,22 +11,122 @@
             }
         </script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
     </head>
     <body>
+        <div id="splash-screen" class="splash-screen">
+            <div class="splash-glow"></div>
+            
+            <div class="splash-content">
+                <div>
+                    <h1 class="splash-title">
+                        <span id="typewriter-text"></span><span class="typewriter-cursor">|</span>
+                    </h1>
+                </div>
+                
+                <div class="animate-fade-up" style="animation-delay: 1.2s;">
+                    <p class="splash-subtitle">Fork() is a spatial text editor for mapping out logic trees, user flows, and branching thoughts.</p>
+                </div>
+                
+                <div class="splash-cards">
+                    <div class="splash-card animate-fade-up" style="animation-delay: 1.4s;">
+                        <div class="splash-icon">🧠</div>
+                        <h3>The Use Cases</h3>
+                        <p>Standard docs force you to think top-to-bottom. Use this essentially infinite canvas to brainstorm app architectures, draft branching narratives, or untangle complex decisions.</p>
+                    </div>
+                    <div class="splash-card animate-fade-up" style="animation-delay: 1.5s;">
+                        <div class="splash-icon">⌨️</div>
+                        <h3>Zero-Mouse Flow</h3>
+                        <p>Never break your flow state. Press <kbd>Cmd/Ctrl</kbd> + <kbd>↵</kbd> to branch logic downward, and <kbd>Cmd/Ctrl</kbd> + <kbd>B</kbd> to spawn sibling thoughts side-by-side and more keyboard shortcuts are available to make sure you never get interrupted.</p>
+                    </div>
+                    <div class="splash-card animate-fade-up" style="animation-delay: 1.6s;">
+                        <div class="splash-icon">⚡</div>
+                        <h3>Ship Your Logic</h3>
+                        <p>Everything auto-saves locally. When your thought tree is complete, use the 1-click exporter to generate a clean Markdown list, JSON structure, or a PNG.</p>
+                    </div>
+                </div>
+
+                <div class="splash-footer animate-fade-up" style="animation-delay: 1.8s;">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" id="skip-splash-check">
+                        <span class="checkmark">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </span>
+                        Don't show this again
+                    </label>
+
+                    <div class="splash-action">
+                        <button id="dismiss-splash-btn">Continue to Workspace <kbd>↵</kbd></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="canvas">
             <div class="node" id="root-node">
                 <div class="node-card">
-                    <textarea placeholder="Start you thought process here..."></textarea>
+                    <button class="delete-btn" title="Delete branch">×</button>
+                    <textarea placeholder="Start your thought process here..."></textarea>
                     <button class="fork-btn">⑂ Fork()</button>
-
                     <button class="collapse-btn" title="Fold/Unfold Branch">
                         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </button>
                 </div>
-
                 <div class="children"></div>
+            </div>
+        </div>
+
+        <div class="bottom-left-hud">
+            <div class="hud-items">
+                <div class="hud-item"><kbd>Cmd/Ctrl</kbd> + <kbd>↵</kbd> <span>Child Branch</span></div>
+                <div class="hud-item"><kbd>Cmd/Ctrl</kbd> + <kbd>B</kbd> <span>Sibling Branch</span></div>
+                <div class="hud-item"><kbd>Cmd/Ctrl</kbd> + <kbd>⌫</kbd> <span>Delete Node</span></div>
+                <div class="hud-item"><kbd>Cmd/Ctrl</kbd> + <kbd>Arrows</kbd> <span>Navigate</span></div>
+            </div>
+            
+            <button id="shortcuts-toggle" class="shortcuts-btn">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                    <line x1="6" y1="8" x2="6" y2="8"></line>
+                    <line x1="10" y1="8" x2="10" y2="8"></line>
+                    <line x1="14" y1="8" x2="14" y2="8"></line>
+                    <line x1="18" y1="8" x2="18" y2="8"></line>
+                    <line x1="6" y1="12" x2="6" y2="12"></line>
+                    <line x1="10" y1="12" x2="10" y2="12"></line>
+                    <line x1="14" y1="12" x2="14" y2="12"></line>
+                    <line x1="18" y1="12" x2="18" y2="12"></line>
+                    <line x1="8" y1="16" x2="16" y2="16"></line>
+                </svg>
+                View all shortcuts
+            </button>
+        </div>
+
+        <div id="shortcuts-modal" class="modal-overlay hidden">
+            <div class="modal-content shortcuts-content">
+                <div class="modal-header">
+                    <h2>Keyboard Shortcuts</h2>
+                    <button id="close-shortcuts" class="close-modal-btn" title="Close">×</button>
+                </div>
+                <div class="shortcuts-grid">
+                    
+                    <div class="shortcut-category">Node Operations</div>
+                    <div class="shortcut-row"><span>Spawn Child Branch</span> <div class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>↵</kbd></div></div>
+                    <div class="shortcut-row"><span>Spawn Sibling Branch</span> <div class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>B</kbd></div></div>
+                    <div class="shortcut-row"><span>Delete Branch</span> <div class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>⌫</kbd></div></div>
+                    
+                    <div class="shortcut-category">Canvas Navigation</div>
+                    <div class="shortcut-row"><span>Navigate Canvas</span> <div class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>Arrows</kbd></div></div>
+                    <div class="shortcut-row"><span>Zoom In / Out</span> <div class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>+</kbd> / <kbd>-</kbd></div></div>
+                    <div class="shortcut-row"><span>Recenter Camera</span> <div class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>0</kbd></div></div>
+
+                    <div class="shortcut-category">State & View</div>
+                    <div class="shortcut-row"><span>Undo</span> <div class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>Z</kbd></div></div>
+                    <div class="shortcut-row"><span>Redo</span> <div class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></div></div>
+                    <div class="shortcut-row"><span>Focus Mode</span> <div class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd></div></div>
+                    
+                </div>
             </div>
         </div>
 
@@ -48,7 +148,7 @@
                     </svg>
                 </button>
 
-                <button id="focus-toggle" title="Toggle Focuse Mode">
+                <button id="focus-toggle" title="Toggle Focus Mode">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                         <circle cx="12" cy="12" r="3"></circle>
@@ -69,6 +169,7 @@
                 
                 <div id="export-dropdown" class="export-dropdown hidden">
                     <button id="export-png">PNG</button>
+                    <button id="export-svg">SVG</button>
                     <button id="export-md">Markdown</button>
                     <button id="export-json">JSON</button>
                 </div>
